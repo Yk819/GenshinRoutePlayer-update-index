@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 2,
+  "manifestVersion": 1,
+  "generatedAt": "2026-11-08T12:49:18Z",
+  "latest": {
+    "stable": "0.1.0"
+  },
+  "minUpdaterVersion": "0.1.0",
+  "minUpdater2Version": "0.2.0",
+  "minSupportedVersion": "0.1.0",
+  "versions": [
+    {
+      "version": "0.1.0",
+      "channel": "stable",
+      "publishedAt": "2026-11-08T12:49:18Z",
+      "brief": "0.1.0 \u6B63\u5F0F\u53D1\u5E03"
+    }
+  ],
+  "edges": []
+}
