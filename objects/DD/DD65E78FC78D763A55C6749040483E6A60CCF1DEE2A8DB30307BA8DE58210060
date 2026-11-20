@@ -1,0 +1,172 @@
+# GenshinRoutePlayer 配置（0.2.0）
+# 工具都放在程序目录下，用相对路径即可；换目录也能用。
+streaming:
+  provider: ytdlp
+
+  ytdlp:
+    executable_path: 'tools\yt-dlp.exe'
+    ffmpeg_path: ''
+    timeout_seconds: 30
+    preferred_format: 'bv*[height<=720]+ba/b[height<=720]/b'
+
+  headless:
+    browser_executable_path: ''
+    user_data_dir: ''
+    timeout_seconds: 60
+
+  cookie_file: 'config/cookie.json'
+  enable_cookie_injection: false
+
+player:
+  mpv_path: 'tools\mpv.exe'
+  cache_seconds: 20
+  demuxer_max_bytes: 67108864
+  demuxer_max_back_bytes: 33554432
+  extra_args: ''
+  use_libmpv: true
+  libmpv_path: 'lib\libmpv-2.dll'
+  # 起播前的最小缓冲（秒）。ADR-0011：2 → 0.3（切 P 更快；mpv cache-pause 兜底）
+  # **唯一来源是代码里的 PlayerConfig.DefaultMinBufferSeconds**：本行只是发行默认值的镜像，改常量必须同步改本行。
+  min_buffer_seconds: 0.3
+
+playback:
+  prefetch_next_page: true
+  prefetch_threshold_seconds: 20
+  # 自动连播追加进播放列表（libmpv 无缝衔接）
+  seamless_switch: true
+
+# 发行版只显示视频；想看控制条改成 true
+ui:
+  show_controls: false
+
+  # 窗口尺寸（DIP）
+  window:
+    width: 860
+    height: 520
+    min_width_with_controls: 480
+    min_height_with_controls: 320
+    min_width: 200
+    min_height: 120
+
+  # 透明度（0-1）
+  opacity:
+    min: 0.1
+    max: 1.0
+    default: 1.0
+
+  # 主题令牌（V1 颜色 + V2 字体族/字号 + V3 间距/透明度/遮罩色；取消注释即覆盖 Shell/Themes/Theme.xaml 的现值）
+  # 颜色：值 = 内置默认值；缺键/空白 = 不覆盖。只接受 '#RRGGBB' / '#AARRGGBB'，
+  # 非法颜色串会在启动日志 Warn 并回落默认，不会阻止启动。
+  # 字体：字体族会查系统字体表，找不到只 Warn 并回落；字号 <=0 / 非数字同样 Warn 回落。
+  # theme:
+  #   colors:
+  #     background:              '#FF1E1E1E'
+  #     panel:                   '#FF252525'
+  #     panel_border:            '#FF3A3A3A'
+  #     window_border:           '#FF3C3C3C'
+  #     backdrop:                '#CC101010'
+  #     text_primary:            '#FFFFFFFF'
+  #     text_secondary:          '#FFAAAAAA'
+  #     text_muted:              '#FF8A8A8A'
+  #     text_checkbox:           '#FFDDDDDD'
+  #     text_control_label:      '#FFCCCCCC'
+  #     text_placeholder:        '#FF7A7A7A'
+  #     accent:                  '#FF8AB4F8'
+  #     error:                   '#FFFF6B6B'
+  #     progress_played:         '#FF3B82F6'
+  #     progress_buffered:       '#FF4A4A4A'
+  #     progress_unbuffered:     '#FF8A8A8A'
+  #     # V3 遮罩/气泡色（8 个遮罩色 + tooltip 配对底色）；颜色可写 6 位，alpha 交给 opacity.* 相乘
+  #     text_tooltip:            '#FF444444'   # 编码说明气泡正文；与 tooltip_background 成对改，否则不可读
+  #     tooltip_background:      '#FFFFFFFF'   # 气泡底色（V3 起 Theme.xaml 有隐式 ToolTip Style 引用这对键）
+  #     drag_handle:             '#B0606060'   # 视频顶部拖动条底
+  #     drag_handle_border:      '#33000000'   # 拖动条下沿 1px 阴影
+  #     drag_pill:               '#B3FFFFFF'   # 拖动条中间握把
+  #     pause_badge:             '#8C000000'   # 暂停大圆角块
+  #     pause_badge_bar:         '#FFF2F2F2'   # 暂停双竖条
+  #     osd_background:          '#66000000'   # 快捷键 OSD 底
+  #     osd_text:                '#FFD8D8D8'   # 快捷键 OSD 文字
+  #   fonts:
+  #     family: ''               # 全局正文；空/不写 = WPF 系统默认字体
+  #     family_mono: 'Consolas'
+  #     family_subtitle: 'Microsoft YaHei UI'
+  #     size_caption: 12         # 更新日志页码 / 翻页 / 展开按钮
+  #     size_small: 14
+  #     size_body: 16
+  #     size_title: 20
+  #     size_changelog: 13       # 更新日志条目正文（分页测量与渲染同源）
+  #     size_changelog_title: 18
+  #     size_subtitle: 22        # 视频字幕
+  #   spacing:
+  #     scale: 1.0               # 只乘 31 个 Spacing.* 令牌（不动窗口几何与 Size.*）；建议 0.85–1.15，越界收敛 + Warn
+  #   opacity:
+  #     # 4 个 0–1 倍率，与对应颜色里的 alpha 相乘；缺键 = 1.0（不缩放）。
+  #     # 颜色写 6 位时 alpha 按 FF 参与相乘，例：colors.backdrop '#101010' + 0.80 = 现状 #CC101010；
+  #     # 颜色写旧 8 位时连旧 alpha 一起乘。默认期望值：backdrop 0.80 / osd 0.40 / pause_badge 0.55 / drag_handle 0.69。
+  #     backdrop: 1.0
+  #     osd: 1.0
+  #     pause_badge: 1.0
+  #     drag_handle: 1.0
+
+
+  # 时间/像素常量（毫秒 / 像素）
+  timings:
+    resize_debounce_ms: 150
+    progress_tick_ms: 500
+    cursor_check_ms: 120
+    osd_duration_ms: 1600
+    resize_edge_px: 10
+    drag_area_height: 48
+    layout_min_visible_px: 60
+    game_cursor_tolerance_px: 5
+    seek_coalesce_ms: 160
+
+  # 画质选项
+  quality:
+    default: 720
+    options: [1080, 720, 480, 360]
+
+  # 编码偏好
+  codec:
+    default: h264
+    options: [auto, h264, hevc, av1]
+    format_filters:
+      h264: "[vcodec^=avc]"
+      hevc: "[vcodec~='^(hev|hvc)']"
+      av1: "[vcodec^=av01]"
+
+# 热键默认值（步长/长按行为）
+hotkeys:
+  default_step: 5
+  seek_step: 5
+  volume_step: 2
+  opacity_step: 2
+  speed_step: 0.1
+  hold_speed: 3.0
+  hold_behavior: seek
+
+# 日志保留与输出
+logging:
+  retained_files: 14
+  status_log_frames: 180
+  truncate_length: 90
+
+# 网络请求
+net:
+  user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+  fallback_user_agent: 'Mozilla/5.0'
+  api_timeout_seconds: 10
+  probe_timeout_seconds: 4
+
+# 外部依赖下载（yt-dlp 固定版本与镜像）
+download:
+  ytdlp:
+    version: '2026.10.26'
+    sha256: 'F5389D3698ECDE4EF06F4E6B1CE0294FE9AC1396228C8990B8D3416D6D177A7D'
+    urls:
+      - 'https://github.com/yt-dlp/yt-dlp/releases/download/{version}/yt-dlp.exe'
+      - 'https://ghproxy.net/https://github.com/yt-dlp/yt-dlp/releases/download/{version}/yt-dlp.exe'
+      - 'https://gh-proxy.com/https://github.com/yt-dlp/yt-dlp/releases/download/{version}/yt-dlp.exe'
+      - 'https://ghfast.top/https://github.com/yt-dlp/yt-dlp/releases/download/{version}/yt-dlp.exe'
+  timeout_minutes: 30
+  buffer_bytes: 81920
