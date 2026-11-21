@@ -1,0 +1,214 @@
+{
+  "version": "0.2.1",
+  "channel": "stable",
+  "files": {
+    "GenshinRoutePlayer.App.exe": {
+      "sha256": "DCA33CBE6B01EA39FEB29F8F827FE0D289E0C8A2BA814363326CA3C5A348BD4C",
+      "size": 199372
+    },
+    "\u4F7F\u7528\u8BF4\u660E.html": {
+      "sha256": "F5BC9A1102416C9A0653C154C233244BE652DDC7660A8104D28749C1E8855722",
+      "size": 41474
+    },
+    "\u542F\u52A8 GenshinRoutePlayer.vbs": {
+      "sha256": "09EF1016FC22F29A38933A4D6AE3968AB731CF25267F3A0D0B5C9117C308FCB5",
+      "size": 2576
+    },
+    "app/GenshinRoutePlayer.App.deps.json": {
+      "sha256": "1A97DF0D26A52E9AD31C5911410AD1F3E8A4E8252F77B627BB37F3FB20A51BB3",
+      "size": 17552
+    },
+    "app/GenshinRoutePlayer.App.dll": {
+      "sha256": "B52F3A9759BDDA63FFB138227E0A82CD799408C98A0CEA1AC2EE21DC41581093",
+      "size": 430592
+    },
+    "app/GenshinRoutePlayer.App.exe": {
+      "sha256": "7EDE827010E98AFFA15AF84C5D5FF0764A499B9B2386E434968AD211DCD5C572",
+      "size": 172032
+    },
+    "app/GenshinRoutePlayer.App.Playback.dll": {
+      "sha256": "9879A98862109677773E55464D46894753AFB4DB7810D8DD54EA265ED736C36D",
+      "size": 241664
+    },
+    "app/GenshinRoutePlayer.App.runtimeconfig.json": {
+      "sha256": "C71152BF25E40D647B2440C5B39BE157A3D356106BE9D5B678AB97BB87B4E782",
+      "size": 458
+    },
+    "app/GenshinRoutePlayer.App.Update.dll": {
+      "sha256": "996379A8672FBC3348BC3B1E41291558D7BED5FABA9BFD51FA5A5061A1D4B3A0",
+      "size": 28672
+    },
+    "app/GenshinRoutePlayer.Core.dll": {
+      "sha256": "121FB0AE2B1C5D5E107A653CBC3F211A45A1FFCCD9E3505568964D0141D0584C",
+      "size": 72704
+    },
+    "app/GenshinRoutePlayer.Infrastructure.dll": {
+      "sha256": "788F8EAC102C02672EE1EA66BFFD8A5DE8EF15029EE3ABD7581924F77EF72EB1",
+      "size": 70144
+    },
+    "app/GenshinRoutePlayer.Updater.Core.dll": {
+      "sha256": "8225037DB86D1FE87913DEA587B95DAA7A66580BD9DA459F6198073971238F20",
+      "size": 211968
+    },
+    "config/app.yaml": {
+      "sha256": "D25CD2075985EDA365E22510AF1FABD57F809126268DF74083E79640ACD5C766",
+      "size": 6498
+    },
+    "config/dependencies.json": {
+      "sha256": "1121091FBF778EE65E4E428D6CC10B068FF073D446E7FBF9C151C30D3F8E41CE",
+      "size": 585
+    },
+    "deps/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+      "sha256": "67FA4325000DB017DC0C35829B416F024F042D24EFB868BCF17A895EE6500A93",
+      "size": 63768
+    },
+    "deps/Microsoft.Extensions.DependencyInjection.dll": {
+      "sha256": "158761CE778E799949F3A3060C461B1055BB35F1F5A65EFF0E42397849F09ECD",
+      "size": 92952
+    },
+    "deps/Microsoft.Extensions.Logging.Abstractions.dll": {
+      "sha256": "45C22524218541717E4A0ADE36847C1CDA4921F5945B4975A1C78DDFE023D0B1",
+      "size": 65320
+    },
+    "deps/Microsoft.Extensions.Logging.dll": {
+      "sha256": "B2CFBA2E05EE89A91E9BC9CF112468A5F4FA05D1A77EA81C131EA656F3D133C2",
+      "size": 50976
+    },
+    "deps/Microsoft.Extensions.Options.dll": {
+      "sha256": "5E01894CBC0661BACB8CA8F485A40D5EE4E02F28FEF58007668A0276431B4693",
+      "size": 64776
+    },
+    "deps/Microsoft.Extensions.Primitives.dll": {
+      "sha256": "446FF16E903E7479558816E213A3ADEE9A1C1ADAD65A56D853801B10933E29D7",
+      "size": 43680
+    },
+    "deps/Serilog.dll": {
+      "sha256": "6B67FB3F104513036A7446CE4DA3B49449EC9CEA00437C38333910E47BFA41CB",
+      "size": 140800
+    },
+    "deps/Serilog.Extensions.Logging.dll": {
+      "sha256": "A0B6C860FA5BDB3F0EBE5C7AF709FC686A9AA575B616B706BD65A5D0C1FD4226",
+      "size": 29696
+    },
+    "deps/Serilog.Sinks.Console.dll": {
+      "sha256": "30B79981EF4EBD976A74F74A608C89700D043EFE441763678E0BA987FB421A7F",
+      "size": 38912
+    },
+    "deps/Serilog.Sinks.File.dll": {
+      "sha256": "192A97F6A2E408C36D9EC8A0EEE6BBA33A516DDEDF3662C031D88E744629F991",
+      "size": 31232
+    },
+    "deps/SharpGen.Runtime.COM.dll": {
+      "sha256": "28DEB56E87EE908DCE10094B666C5B603E3F01EF5B1C92603B0E7ED49B9B60AE",
+      "size": 168960
+    },
+    "deps/SharpGen.Runtime.dll": {
+      "sha256": "409AA1B082136C5FBA1FCF363EF91739551691979F237C9BC0E93CF6778427B7",
+      "size": 81408
+    },
+    "deps/System.IO.Pipelines.dll": {
+      "sha256": "1A397EBF43B555E03189AAE23879F4D4DE132BC1D0F7C46F7E2884204148B343",
+      "size": 77608
+    },
+    "deps/System.Text.Encodings.Web.dll": {
+      "sha256": "6BE651FCD81A92AB4B0E1157E46FF13F69B66E581DEF1495F767147E51A1AFA9",
+      "size": 70952
+    },
+    "deps/System.Text.Json.dll": {
+      "sha256": "793D646A2440E427F7897740B3AB9F1F692B31B419B3254E7ACE17275BAA8613",
+      "size": 643376
+    },
+    "deps/Vortice.Direct3D11.dll": {
+      "sha256": "BB5DB514F1C4D32B23564EF48231189F17C98854B078EC4C9FFE78DA05445AB4",
+      "size": 352768
+    },
+    "deps/Vortice.Direct3D9.dll": {
+      "sha256": "CC84A04192477691A801B07496DDE063A637E2120691EC59D55720E781664A6B",
+      "size": 138240
+    },
+    "deps/Vortice.DirectX.dll": {
+      "sha256": "F2592742CB433466EA685A669E55720B0D604A4EF1FB6E13625242A102E64EC6",
+      "size": 364544
+    },
+    "deps/Vortice.DXGI.dll": {
+      "sha256": "DBE7E6B76641843DD5B7B2C250335199538C2EB6DF530F96B654E871824949C0",
+      "size": 91648
+    },
+    "deps/Vortice.Mathematics.dll": {
+      "sha256": "525A67F1F998B557D35554406CE5744A26C8D1ABD5321B383A07FAD8E86AB8DC",
+      "size": 123904
+    },
+    "deps/YamlDotNet.dll": {
+      "sha256": "A08B5C6E543B58A807CA3B498E7C86792AA21626379CEB0588C532E185CD07D1",
+      "size": 272384
+    },
+    "lib/libmpv-2.dll": {
+      "sha256": "04E4D27DC385DC18DDD93FBE69C75E635B864F3C6EC53A9122DF54C2F7842F4A",
+      "size": 121108480
+    },
+    "scripts/install.ps1": {
+      "sha256": "5762AAEE5E506CEA34E4542B29A67E0BB336AA0EEC70F6053ED1BE4719E0E22A",
+      "size": 4286
+    },
+    "scripts/launcher.ps1": {
+      "sha256": "B45935DF4B29DC887052F38580B29F48D3B858252D93FDC578A25AC427F6F782",
+      "size": 2538
+    },
+    "tools/yt-dlp.exe": {
+      "sha256": "F5389D3698ECDE4EF06F4E6B1CE0294FE9AC1396228C8990B8D3416D6D177A7D",
+      "size": 23575744
+    },
+    "updater/GenshinRoutePlayer.Updater.Core.dll": {
+      "sha256": "8225037DB86D1FE87913DEA587B95DAA7A66580BD9DA459F6198073971238F20",
+      "size": 211968
+    },
+    "updater/GenshinRoutePlayer.Updater.deps.json": {
+      "sha256": "1BA137D94089F040D6A5E4816442806D3DED5229C5A8301D2F64409DFB8A6FC3",
+      "size": 931
+    },
+    "updater/GenshinRoutePlayer.Updater.dll": {
+      "sha256": "E59DD47CD35A696E2DC074D362651943AAE492587A89623A39F288BA22E2146D",
+      "size": 31232
+    },
+    "updater/GenshinRoutePlayer.Updater.exe": {
+      "sha256": "8E24E9C195B16425A5B30BD8EA49B668437E76BFC3399E7B6EFC1D2D86573DED",
+      "size": 151552
+    },
+    "updater/GenshinRoutePlayer.Updater.runtimeconfig.json": {
+      "sha256": "95505548C838F72A6A829FD5332DBC674C715CE26A216E9EB32BEC8B5821EAE2",
+      "size": 447
+    },
+    "updater/public.pem": {
+      "sha256": "2824675CEDAC8DE5CD488DC260C068856E4D4F8F8B7774925AB948DD00C65CF5",
+      "size": 177
+    },
+    "updater/updater.json": {
+      "sha256": "FB2213E2369409A914EE9C3CA3EDC8D0BF4FA796FAE29656294FED750C3CA6CB",
+      "size": 1748
+    },
+    "updater2/GenshinRoutePlayer.Updater.Core.dll": {
+      "sha256": "8225037DB86D1FE87913DEA587B95DAA7A66580BD9DA459F6198073971238F20",
+      "size": 211968
+    },
+    "updater2/GenshinRoutePlayer.Updater2.deps.json": {
+      "sha256": "4BFE19A3C7FFB4131AEF260A75A22FE6DBCD858CF9D02F451915F661EC145006",
+      "size": 934
+    },
+    "updater2/GenshinRoutePlayer.Updater2.dll": {
+      "sha256": "8ECC984EDEDE9888DAF09E2DFCE2593E8034EF505CA98DA3DAE47CF578754B53",
+      "size": 15360
+    },
+    "updater2/GenshinRoutePlayer.Updater2.exe": {
+      "sha256": "FAD6C74CFD39FBEC6649CF0E19AA17AF4DA25900316917884E0AC9A9D79F61CE",
+      "size": 151552
+    },
+    "updater2/GenshinRoutePlayer.Updater2.runtimeconfig.json": {
+      "sha256": "28329CF08F6505E73806B17558B187C02F0C1C516FE47EBFB7A013D082AAA306",
+      "size": 340
+    },
+    "updater2/updater2.json": {
+      "sha256": "ED27F54B0C32B7F51A2BFFA65E5536BBDD2EEB87F69D1770D1788D679B658A07",
+      "size": 30
+    }
+  }
+}

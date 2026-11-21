@@ -1,0 +1,45 @@
+{
+  "installRoot": "..",
+  "stateDirectory": "../app/data/update",
+  "currentVersion": "0.2.1",
+  "updaterVersion": "0.1.0",
+  // 模板占位：策略字符串的唯一来源是 UpdatePreferences.cs 的 UpdatePolicyStrings（TASK-204 / 审计 C-08）；
+  // 本行只服务 CLI 独立调用，守卫测试 VersionSourceTests 锁住它与常量相等。
+  "policy": "auto_stable",
+  "prereleaseFeatureEnabled": false,
+  "publicKeyPath": "public.pem",
+  "sources": [
+    {
+      "name": "gitee",
+      "baseUrl": "https://gitee.com/y_k0819/GenshinRoutePlayer-update-index/raw/release-index/",
+      "manifestPath": "manifest.json",
+      "primary": true
+    },
+    {
+      "name": "github",
+      "baseUrl": "https://raw.githubusercontent.com/Yk819/GenshinRoutePlayer-update-index/release-index/",
+      "manifestPath": "manifest.json",
+      "primary": false
+    }
+  ],
+  "appExecutable": "GenshinRoutePlayer.App.exe",
+  "restartAfterApply": true,
+  "manifestTimeoutSeconds": 5,
+  "objectRetryCount": 3,
+  "sourceSpeedTestEnabled": true,
+  "sourceSpeedTimeoutMilliseconds": 3000,
+  "preferredSourceName": "gitee",
+  "waitTimeoutSeconds": 180,
+
+  "updater1Executable": "updater/GenshinRoutePlayer.Updater.exe",
+  "updater2Executable": "updater2/GenshinRoutePlayer.Updater2.exe",
+  // 模板占位：真实值由 packaging/pack.ps1 从 Updater2 自报的 updater2.version 注入（TASK-195）；
+  // 唯一来源是 src/GenshinRoutePlayer.Updater.Core/Runtime/UpdaterProtocol.cs，守卫测试 VersionSourceTests 锁住这一行与它相等。
+  "updater2Version": "0.2.0",
+  "handoffAckTimeoutSeconds": 30,
+  "handoffRetakeTimeoutSeconds": 30,
+  "lockTimeoutSeconds": 10,
+  "maxHandoffAttempts": 3,
+  "maxRounds": 8,
+  "forceSinglePhase": false
+}
