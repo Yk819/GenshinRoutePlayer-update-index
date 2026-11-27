@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>GenshinRoutePlayer 使用说明</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #141414;
+    --card: #1e1e1e;
+    --line: #3c3c3c;
+    --line-soft: #2c2c2c;
+    --text: #dddddd;
+    --muted: #9aa0a6;
+    --accent: #8ab4f8;
+    --accent-weak: rgba(138, 180, 248, .14);
+    --code-bg: #2a2a2a;
+    --hover: #2a2f3a;
+    --heading: #e8eaed;
+    --text-2: #c9ccd1;
+    --th-bg: #262626;
+    --card-2: #202020;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 10px 26px -20px rgba(0, 0, 0, .8);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Source Han Sans SC", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.72;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page { max-width: 1120px; margin: 0 auto; padding: 28px 22px 64px; }
+
+  .masthead { padding: 6px 2px 20px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+  h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: .3px; }
+  .tagline { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+  .layout { display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 32px; align-items: start; }
+
+  /* ---------- 左侧竖排导航 ---------- */
+  #toc { position: sticky; top: 20px; min-width: 0; max-height: calc(100vh - 40px); overflow: auto; font-size: 14px; }
+  .toc-title { margin: 0 0 8px 10px; font-size: 12px; letter-spacing: .14em; color: var(--muted); }
+  #toc ul { list-style: none; margin: 0; padding: 0; }
+  #toc a {
+    display: block; padding: 6px 10px; color: var(--muted); text-decoration: none;
+    border-left: 2px solid transparent; border-radius: 0 6px 6px 0;
+  }
+  #toc a:hover { color: var(--accent); background: var(--hover); }
+  #toc a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-weak); font-weight: 600; }
+  #toc a.trail { color: var(--accent); }
+  #toc ul.sub { margin: 2px 0 6px; }
+  #toc ul.sub a { padding-left: 24px; font-size: 13.5px; }
+
+  /* ---------- 正文 ---------- */
+  main { min-width: 0; }
+  section.card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 20px 22px; margin: 0 0 18px; box-shadow: var(--shadow);
+  }
+  h2 { margin: 0 0 10px; font-size: 19px; }
+  h3 { margin: 20px 0 8px; font-size: 15.5px; color: var(--heading); }
+  p, li { font-size: 14.5px; }
+  ul, ol { margin: 8px 0; padding-left: 22px; }
+  li + li { margin-top: 4px; }
+  .lead { margin: 0 0 12px; color: var(--muted); }
+  .note { margin: 10px 0 0; color: var(--muted); font-size: 13.5px; }
+  strong { font-weight: 600; }
+
+  code {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 5px;
+    padding: 1px 5px; font-size: 13px;
+    font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+  }
+
+  /* ---------- 表格（宽表用 .table-wrap 横向滚动） ---------- */
+  .table-wrap {
+    max-width: 100%; overflow-x: auto; margin: 10px 0 0;
+    border: 1px solid var(--line); border-radius: 10px;
+  }
+  table { width: 100%; min-width: 700px; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 9px 12px; border-bottom: 1px solid var(--line-soft); text-align: left; vertical-align: top; }
+  th { background: var(--th-bg); color: var(--muted); font-weight: 600; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.k { font-weight: 600; min-width: 9.5em; }
+  td.d { white-space: nowrap; color: var(--text-2); }
+
+  /* ---------- 「改了会怎样」列：选项 / 条件分点 ---------- */
+  .opt {
+    display: block; padding-left: 10px; border-left: 2px solid var(--line);
+    font-size: 13.5px; line-height: 1.62; overflow-wrap: break-word;
+  }
+  .opt + .opt { margin-top: 5px; }
+  .opt-name { font-size: 12.5px; font-weight: 600; color: var(--accent); margin-right: .45em; }
+
+  /* ---------- 折叠 ---------- */
+  details.fold {
+    background: var(--card-2); border: 1px solid var(--line); border-radius: 10px;
+    margin: 12px 0 0;
+  }
+  details.fold > summary {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px;
+    padding: 11px 14px; cursor: pointer; list-style: none;
+  }
+  details.fold > summary::-webkit-details-marker { display: none; }
+  details.fold > summary::before { content: "▸"; flex: 0 0 auto; color: var(--accent); font-size: 11px; }
+  details.fold[open] > summary::before { content: "▾"; }
+  details.fold[open] > summary { border-bottom: 1px solid var(--line); }
+  .s-name { font-weight: 600; }
+  .s-desc { color: var(--muted); font-size: 13px; }
+  .fold-body { padding: 12px 16px 16px; }
+  details.faq > summary { font-weight: 600; }
+  details.faq .fold-body { padding-top: 10px; }
+
+  footer { margin-top: 26px; color: var(--muted); font-size: 12.5px; text-align: center; }
+
+  /* ---------- 窄窗口：竖排导航退化为顶部横向导航 ---------- */
+  @media (max-width: 900px) {
+    .page { padding: 16px 14px 48px; }
+    .masthead { padding-top: 0; margin-bottom: 18px; }
+    h1 { font-size: 22px; }
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    #toc {
+      position: sticky; top: 0; z-index: 9; max-height: none; overflow: visible;
+      margin: 0 -14px; padding: 8px 14px;
+      background: rgba(20, 20, 20, .96); border-bottom: 1px solid var(--line);
+    }
+    .toc-title { display: none; }
+    #toc ul { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 2px; }
+    #toc li { flex: 0 0 auto; }
+    #toc a {
+      white-space: nowrap; padding: 5px 12px; border: 1px solid var(--line);
+      border-radius: 999px; background: var(--card);
+    }
+    #toc a.active { border-color: var(--accent); }
+    #toc ul.sub { display: none; }
+    section.card { padding: 16px 16px; }
+    section, details.fold { scroll-margin-top: var(--nav-offset, 96px); }
+  }
+
+  /* ---------- 打印 ---------- */
+  @media print {
+    :root {
+      color-scheme: light;
+      --bg: #fff; --card: #fff; --line: #ccc; --line-soft: #e5e5e5;
+      --text: #111; --muted: #444; --accent: #1a4fb4; --code-bg: #f4f4f4;
+      --heading: #111; --text-2: #222; --th-bg: #f2f2f2; --card-2: #fff;
+      --shadow: none;
+    }
+    body { background: #fff; }
+    .page { max-width: none; padding: 0; }
+    #toc { display: none; }
+    .layout { display: block; }
+    section.card { border: none; border-radius: 0; box-shadow: none; padding: 8px 0; margin: 0 0 10px; break-inside: avoid-page; }
+    details.fold { break-inside: auto; background: #fff; }
+    .table-wrap { overflow: visible; }
+    table { min-width: 0; }
+    th, td { padding: 6px 8px; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <h1>GenshinRoutePlayer 使用说明</h1>
+    <p class="tagline">在游戏画面上层看 B 站视频的小窗口：怎么启动、怎么播放、每一项设置是什么意思。</p>
+  </header>
+
+  <div class="layout">
+
+    <nav id="toc" aria-label="目录">
+      <div class="toc-title">目录</div>
+      <ul>
+        <li><a href="#start">快速开始</a></li>
+        <li><a href="#shell">主页面与导航</a></li>
+        <li><a href="#play">开始播放</a></li>
+        <li><a href="#login">登录 B 站</a></li>
+        <li><a href="#window">窗口操作</a></li>
+        <li>
+          <a href="#settings">设置项说明</a>
+          <ul class="sub">
+            <li><a href="#settings-play">播放</a></li>
+            <li><a href="#settings-ui">界面</a></li>
+            <li><a href="#settings-update">软件更新</a></li>
+            <li><a href="#settings-keys">快捷键</a></li>
+            <li><a href="#settings-exp">实验性</a></li>
+          </ul>
+        </li>
+        <li><a href="#tray">托盘菜单</a></li>
+        <li><a href="#faq">常见问题</a></li>
+      </ul>
+    </nav>
+
+    <main>
+
+      <!-- ============ 快速开始 ============ -->
+      <section class="card" id="start">
+        <h2>快速开始</h2>
+        <ol>
+          <li>把压缩包解压到有写入权限的目录，例如 <code>D:\GenshinRoutePlayer</code>。</li>
+          <li>双击 <code>启动 GenshinRoutePlayer.vbs</code> 启动程序。</li>
+          <li>如果提示缺少 .NET 8 桌面运行时：程序会自动下载并安装（约 55 MB，装在系统共享目录），装完自动打开播放器。</li>
+          <li>出现用户账户控制提示时选「是」。游戏常以管理员身份运行，程序不提权就收不到游戏在前台时的快捷键。</li>
+          <li>首次启动直接进入主页面；快捷键、画质、缓冲与预取都可随时在【设置】里调整。</li>
+          <li>在主页面左侧点【播放】，填入视频，点「开始播放」。</li>
+        </ol>
+        <p class="note">以后都双击同一个 <code>启动 GenshinRoutePlayer.vbs</code> 启动。</p>
+      </section>
+
+      <!-- ============ 主页面与导航 ============ -->
+      <section class="card" id="shell">
+        <h2>主页面与导航</h2>
+        <p class="lead">启动后先看到主页面：左侧是【播放】【设置】【登录】【其他】四个入口，右侧显示当前页；播放窗是另一个独立窗口。</p>
+        <ul>
+          <li><strong>播放</strong>：填视频、分 P 和起始时间，点「开始播放」。开始播放后主页面默认最小化到任务栏（可在「设置 → 常规 → 界面 → 开始播放后的主页面」改成隐藏或保持不变），点任务栏图标即可回来。</li>
+          <li><strong>设置</strong>：常规、快捷键、实验性三页，改完点「保存」才生效。</li>
+          <li><strong>登录</strong>：内嵌 B 站登录页面，扫码 / 账号密码都在页面里完成，登录成功后立即生效；详见下文「<a href="#login">登录 B 站</a>」。</li>
+          <li><strong>其他</strong>：打开日志位置、复制诊断信息、重启程序。</li>
+          <li><strong>托盘</strong>：右键菜单只有「退出」；左键单击（或双击）托盘图标呼出主页面。</li>
+        </ul>
+      </section>
+
+      <!-- ============ 开始播放 ============ -->
+      <section class="card" id="play">
+        <h2>开始播放</h2>
+        <p class="lead">下面这些都在主页面左侧的【播放】页里。</p>
+        <ul>
+          <li><strong>视频</strong>：填 BV 号（<code>BV1xx411c7mD</code>）、AV 号（<code>av170001</code>）或完整视频链接。</li>
+          <li><strong>分 P</strong>：留空表示第 1 P；多 P 视频可以直接填 <code>2</code>、<code>3</code>…。填写视频号后可展开列表选择分P。</li>
+          <li><strong>起始时间</strong>：留空从头开始；支持 <code>1:23</code>、<code>01:02:03</code>、<code>300</code>（秒）。</li>
+          <li><strong>最近播放</strong>：保留最近 10 条，显示视频、分 P 与最后关闭位置，点一条可回填。</li>
+          <li><strong>收藏 / 稍后再看 / 历史</strong>：播放页顶部的三个页签，需要开启「直连 B 站 API」并登录 B 站。选一条会把视频号回填到播放页，并按记录回填已看进度（收藏接口没有已看进度，按 <code>0:00</code>；稍后再看与历史用记录里的已看时间，历史的分 P 也来自同一条记录，没有记录时为 <code>0:00</code>），不自动播放；回填后仍可手动改起始时间。</li>
+          <li><strong>播放中换视频</strong>：回到主页面【播放】重新填一份再点「开始播放」，会直接替换当前播放窗里的视频，不另开窗口；同样可以填起始时间。</li>
+        </ul>
+        <p class="note">视频一直解析不出来时，先换一个视频确认不是源本身的问题；仍然不行时检查网络是否正常。</p>
+      </section>
+
+      <!-- ============ 登录 ============ -->
+      <section class="card" id="login">
+        <h2>登录 B 站</h2>
+        <p class="lead">在主页面左侧点【登录】，页面里直接打开 B 站登录页：扫码、账号密码、短信验证都在这个页面里完成，和用浏览器登录一样。</p>
+        <ul>
+          <li><strong>登录成功</strong>：页面提示「登录成功，已生效」；收藏、稍后再看与字幕等登录态能力立即可用。</li>
+          <li><strong>登录后可以</strong>：显示视频字幕（需要视频本身带字幕）、请求账号权限内的更高清晰度、使用收藏与稍后再看等功能；1080P 及以下不登录也能看。</li>
+          <li><strong>重新登录 / 退出登录</strong>：页面底部有这两个按钮。「重新登录」会覆盖现有登录状态；「退出登录」会清除本机保存的登录信息并回到 B 站登录页。</li>
+          <li><strong>刷新登录页</strong>：页面加载失败或卡住时点「刷新登录页」重开。</li>
+          <li><strong>提示缺少浏览器组件</strong>：说明系统缺 Microsoft Edge WebView2 Runtime，安装后重新打开【登录】页即可。</li>
+        </ul>
+        <p class="note">登录成功后，程序会把这份登录态保存在程序目录的 <code>config</code> 文件夹里，用于向 B 站请求播放地址、字幕等；本机不需要另行填写或导出任何密钥。登录页只放行 B 站登录页与 B 站首页，跳到其它网站会被拦下。</p>
+      </section>
+
+      <!-- ============ 窗口操作 ============ -->
+      <section class="card" id="window">
+        <h2>窗口操作</h2>
+        <ul>
+          <li><strong>不抢焦点</strong>：播放器不会把游戏切到后台。原神里按住 <code>Alt</code> 呼出鼠标，就能拖动窗口、拖四角缩放、点托盘；松开 <code>Alt</code> 游戏继续。</li>
+          <li><strong>移动</strong>：在窗口顶部按住拖动。</li>
+          <li><strong>缩放</strong>：鼠标靠近窗口四角（约 10 像素内）拖动。</li>
+          <li><strong>会记住的项</strong>：窗口位置和大小、音量、透明度，下次启动自动恢复。</li>
+          <li><strong>暂停标志</strong>：暂停时画面中央显示大图标。</li>
+          <li><strong>顶部提示</strong>：调音量、透明度、倍速、切 P 等操作会在窗口顶部显示提示。</li>
+          <li><strong>进度条</strong>：点击任意位置跳转，按住拖动实时跟随；鼠标悬停时进度条加粗并显示当前位置圆点。</li>
+          <li><strong>鼠标锁定</strong>：游戏锁鼠标时，播放器上的系统箭头会自动隐藏，画面中间不会多出一个箭头。</li>
+        </ul>
+      </section>
+
+      <!-- ============ 设置项说明 ============ -->
+      <section class="card" id="settings">
+        <h2>设置项说明</h2>
+        <p class="lead">在主页面左侧点【设置】打开。设置分「常规」「快捷键」「实验性」三页，其中常规页又分「播放」「界面」「软件更新」三节。改完点「保存」才生效；不点保存直接关闭设置页或主窗口，改动即放弃。「重置为默认」把所有项恢复出厂值，同样要点「保存」。绝大多数设置在保存后立即生效；只有播放引擎、mpv 路径、libmpv 路径与登录信息（Cookie 文件）要重启程序，保存后页面底部的提示条会指出。</p>
+        <p class="note">设置页里会出现两种标记：「需登录生效」= 先登录 B 站账号；「需大会员」= 需登录且账号是 B 站大会员，普通账号登录也无效。需要重启的项没有行内标记，保存后由提示条说明。</p>
+
+        <!-- ---------- 播放 ---------- -->
+        <details class="fold" id="settings-play">
+          <summary>
+            <span class="s-name">播放</span>
+            <span class="s-desc">播完行为、分 P 预取、画质、编码、缓冲、画面适应（8 项）</span>
+          </summary>
+          <div class="fold-body">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>设置项</th><th>是什么</th><th>默认</th><th>改了会怎样</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="k">视频播放结束时</td>
+                    <td>一个视频播完后自动做什么。</td>
+                    <td class="d">下 1P</td>
+                    <td>
+                      <div class="opt"><span class="opt-name">可选项</span>「暂停视频」「下 1P」「重新播放该视频」</div>
+                      <div class="opt"><span class="opt-name">下 1P</span>播完自动接下一个分 P</div>
+                      <div class="opt"><span class="opt-name">暂停视频</span>停在末尾并显示暂停标志</div>
+                      <div class="opt"><span class="opt-name">重新播放该视频</span>从本 P 开头重放</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="k">暂停在末尾后的行为</td>
+                    <td>结束策略选「暂停视频」后，再按播放键会发生什么。</td>
+                    <td class="d">重播视频</td>
+                    <td>
+                      <div class="opt"><span class="opt-name">重播视频</span>从头再放一遍</div>
+                      <div class="opt"><span class="opt-name">维持暂停在末尾</span>保持最后一帧不动</div>
+                      <div class="opt">只有「视频播放结束时」选「暂停视频」时这一行才能改，其它选项下整行变灰。</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="k">当前 P 快结束时预取下一 P</td>
+                    <td>当前分 P 快播完时，提前解析下一个分 P 的播放地址。</td>
+                    <td class="d">开启</td>
+                    <td>关掉后要等真正切 P 才开始解析，切 P 前的等待变长。</td>
+                  </tr>
+                  <tr>
+                    <td class="k">剩余多少秒开始预取</td>
+                    <td>距本 P 结束还有多少秒时开始预取。</td>
+                    <td class="d">20 秒</td>
+                    <td>
+                      <div class="opt"><span class="opt-name">越大</span>越早开始（更早占用网络）</div>
+                      <div class="opt"><span class="opt-name">越小</span>越晚开始</div>
+                      <div class="opt"><span class="opt-name">0</span>等于不预取</div>
+                      <div class="opt">只能填 0 或正整数。</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="k">画质</td>
+                    <td>向 B 站请求的视频清晰度。</td>
+                    <td class="d">720P</td>
+                    <td>
+                      <div class="opt"><span class="opt-name">可选项</span>设置页下拉里列出的档位，默认 720P</div>
+                      <div class="opt">越高越清晰，也越吃带宽和显卡；小窗播放 720P 够用。</div>
+                      <div class="opt">这一项只对兼容模式生效；直连模式按账号权限请求服务端允许的最高清晰度。</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="k">编码偏好</td>
+                    <td>让 B 站优先提供哪种编码的视频。</td>
+                    <td class="d">H.264（推荐）</td>
+                    <td>四个选项的差别见下方「编码偏好怎么选」。选错一般只会变卡或黑屏，切回 H.264 即可。</td>
+                  </tr>
+                  <tr>
+                    <td class="k">缓冲时长</td>
+                    <td>播放器预先缓冲多少秒内容。</td>
+                    <td class="d">20 秒</td>
+                    <td>
+                      <div class="opt"><span class="opt-name">越大</span>越抗卡顿、越占内存</div>
+                      <div class="opt"><span class="opt-name">越小</span>起播和切 P 更快，但更容易卡</div>
+                      <div class="opt">保存后下一次开始播放时生效。</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="k">画面适应</td>
+                    <td>画面在窗口里怎么摆放。</td>
+                    <td class="d">适应</td>
+                    <td>
+                      <div class="opt"><span class="opt-name">可选项</span>拉伸 / 填充 / 适应 / 裁剪，差别见下方「画面适应怎么选」</div>
+                      <div class="opt">切换后画面立刻变化，不用重启，也不会重新加载视频。</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>编码偏好怎么选</h3>
+            <ul>
+              <li><strong class="opt-name">自动</strong>交给 B 站与播放器决定，可能选到 AV1 / HEVC，老显卡容易黑屏或卡顿。</li>
+              <li><strong class="opt-name">H.264（推荐）</strong>兼容性最好，几乎所有显卡都能硬解。</li>
+              <li><strong class="opt-name">HEVC（H.265）</strong>同画质体积更小，需要较新的显卡才能硬解，老显卡会退回 CPU 解码。</li>
+              <li><strong class="opt-name">AV1</strong>体积最小，需要 RTX 30/40、RX 6000 以上的新显卡才支持硬解。</li>
+            </ul>
+
+            <h3>画面适应怎么选</h3>
+            <ul>
+              <li><strong class="opt-name">拉伸</strong>铺满窗口，不保持比例，画面会变形。</li>
+              <li><strong class="opt-name">填充</strong>保持比例铺满窗口，超出部分被裁掉，没有黑边。</li>
+              <li><strong class="opt-name">适应（默认）</strong>保持比例完整显示，多出的区域留黑边。</li>
+              <li><strong class="opt-name">裁剪</strong>保持比例且不放大，按窗口比例居中裁切；源画面比窗口小时仍然留黑边。</li>
+            </ul>
+          </div>
+        </details>
+
+        <!-- ---------- 界面 ---------- -->
+        <details class="fold" id="settings-ui">
+          <summary>
+            <span class="s-name">界面</span>
+            <span class="s-desc">视频进度条、主页面行为、播放窗标题栏按钮（4 项）</span>
+          </summary>
+          <div class="fold-body">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>设置项</th><th>是什么</th><th>默认</th><th>改了会怎样</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="k">启用视频进度条</td>
+                    <td>画面底部的细长进度条：蓝色是已播放，深灰是已缓冲，浅灰是未缓冲。</td>
+                    <td class="d">开启</td>
+                    <td>
+                      <div class="opt"><span class="opt-name">关掉后</span>进度条不显示，也不能点击或拖动跳转</div>
+                      <div class="opt">下面那一行会变灰。</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="k">受到透明度调节影响</td>
+                    <td>调低窗口透明度时，进度条要不要跟着变淡。</td>
+                    <td class="d">开启（跟着变淡）</td>
+                    <td>
+                      <div class="opt"><span class="opt-name">关闭后</span>进度条保持清晰，不随视频透明度变淡</div>
+                      <div class="opt">只在上一项开启时可以改。</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="k">开始播放后的主页面</td>
+                    <td>点「开始播放」之后，主页面窗口怎么处理。</td>
+                    <td class="d">最小化</td>
+                    <td>
+                      <div class="opt"><span class="opt-name">最小化（默认）</span>收进任务栏，点任务栏图标回到主页面</div>
+                      <div class="opt"><span class="opt-name">隐藏（保留托盘）</span>任务栏不显示，只能左键单击托盘图标呼出</div>
+                      <div class="opt"><span class="opt-name">保持不变</span>主页面留在原处，播放窗单独出现</div>
+                      <div class="opt">改完下一次开始播放时生效；播放窗始终是任务栏里独立的另一个窗口。</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="k">显示播放视频标题栏按钮</td>
+                    <td>播放窗右上角显示【最小化】与【关闭】两个小按钮。</td>
+                    <td class="d">关闭</td>
+                    <td>
+                      <div class="opt"><span class="opt-name">开启</span>右上角出现两个按钮：【最小化】收进任务栏，【关闭】停止播放并回到主页面（不退出程序）</div>
+                      <div class="opt"><span class="opt-name">关闭（默认）</span>播放窗顶部保持原样，没有这两个按钮</div>
+                      <div class="opt">穿透（<code>F10</code>）时按钮跟着窗口一起穿透，不响应点击。</div>
+                      <div class="opt">保存后立即生效。</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="note">视频字幕不在这一页：字幕开关已移到「实验性」页（见下文），且只在直连模式下可用。</p>
+          </div>
+        </details>
+
+        <!-- ---------- 软件更新 ---------- -->
+        <details class="fold" id="settings-update">
+          <summary>
+            <span class="s-name">软件更新</span>
+            <span class="s-desc">更新策略、立即检查更新（2 项）</span>
+          </summary>
+          <div class="fold-body">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>设置项</th><th>是什么</th><th>默认</th><th>改了会怎样</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="k">更新策略</td>
+                    <td>启动程序后怎么处理新版本。</td>
+                    <td class="d">自动安装稳定版</td>
+                    <td>三个选项的差别见下方「三种更新策略」。改了从下一次启动开始生效。</td>
+                  </tr>
+                  <tr>
+                    <td class="k">立即检查更新</td>
+                    <td>马上检查一次新版本，右侧显示当前版本与检查结果。</td>
+                    <td class="d">—</td>
+                    <td>
+                      <div class="opt">点一下开始检查</div>
+                      <div class="opt"><span class="opt-name">发现新版本</span>会问是否现在下载，下载完成后仍然是退出程序时安装</div>
+                      <div class="opt">此安装不带更新组件时按钮不可用。</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>三种更新策略</h3>
+            <ul>
+              <li><strong class="opt-name">自动安装稳定版（默认）</strong>启动后在后台检查，发现新版本直接下载，下完托盘提示「更新已就绪」；退出程序时替换文件并自动重启。</li>
+              <li><strong class="opt-name">发现新版本时询问我</strong>启动后照样检查，但发现新版本先弹窗问「现在下载吗？」，选「是」才下载；之后同样是退出时安装。</li>
+              <li><strong class="opt-name">不检查更新</strong>启动时不再检查。仍可以在「设置 → 常规 → 软件更新」点「立即检查更新」手动检查，手动检查同样会先问是否下载。</li>
+            </ul>
+            <p class="note">更新在退出程序时安装：发现新版本会先下载。退出后自动替换文件并重新启动，下次启动弹出本次更新的简要说明。</p>
+          </div>
+        </details>
+
+        <!-- ---------- 快捷键 ---------- -->
+        <details class="fold" id="settings-keys">
+          <summary>
+            <span class="s-name">快捷键</span>
+            <span class="s-desc">长按行为、17 个动作与默认键、录制、逐行重置（2 项 + 17 行）</span>
+          </summary>
+          <div class="fold-body">
+
+            <h3>长按快进</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>设置项</th><th>是什么</th><th>默认</th><th>改了会怎样</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="k">长按快进键行为</td>
+                    <td>按住「视频快进」键不放时会怎样。</td>
+                    <td class="d">多次快进</td>
+                    <td>可选「多次快进」「长按倍速」，差别见下方说明。</td>
+                  </tr>
+                  <tr>
+                    <td class="k">长按倍速</td>
+                    <td>长按倍速用多少倍速播放。</td>
+                    <td class="d">3 倍（0.5–5）</td>
+                    <td>
+                      <div class="opt">只有在上一项选「长按倍速」时才能改。</div>
+                      <div class="opt">只能填 0.5–5 之间的数字，超出范围保存时会提示「长按倍速必须是 0.5–5 之间的数字」。</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <ul>
+              <li><strong class="opt-name">多次快进</strong>按住后连续快进；只按一下就快进一次。快退、音量、透明度、倍速这几个连续键也一样按住连发。</li>
+              <li><strong class="opt-name">长按倍速</strong>按住「视频快进」键进入设定倍速播放；松开恢复原速，不改动你自己设置的倍速。只按一下就松开，照常快进一次。</li>
+              <li>长按倍速只对「视频快进」这一个键生效；快退、音量、透明度、倍速仍然按住连发。</li>
+            </ul>
+
+            <h3>动作与默认键</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>动作</th><th>默认键</th><th>步长</th><th>作用</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="k">暂停 / 继续</td><td class="d"><code>·</code></td><td class="d">—</td><td>暂停或继续播放。</td></tr>
+                  <tr><td class="k">视频快退</td><td class="d"><code>6</code></td><td class="d">5 秒</td><td>往回跳；按住连发。</td></tr>
+                  <tr><td class="k">视频快进</td><td class="d"><code>7</code></td><td class="d">5 秒</td><td>往前跳；按住连发，或按上面的设置改为长按倍速。</td></tr>
+                  <tr><td class="k">减小倍速</td><td class="d"><code>8</code></td><td class="d">0.1</td><td>降低播放倍速，最低 0.1 倍。</td></tr>
+                  <tr><td class="k">增大倍速</td><td class="d"><code>9</code></td><td class="d">0.1</td><td>提高播放倍速，最高 4 倍。</td></tr>
+                  <tr><td class="k">音量增加</td><td class="d"><code>↑</code></td><td class="d">2</td><td>调大音量，最大 100。</td></tr>
+                  <tr><td class="k">音量减少</td><td class="d"><code>↓</code></td><td class="d">2</td><td>调小音量，最小 0。</td></tr>
+                  <tr><td class="k">透明度增加</td><td class="d"><code>PageUp</code></td><td class="d">2%</td><td>窗口更不透明，最高 100%。</td></tr>
+                  <tr><td class="k">透明度减少</td><td class="d"><code>PageDown</code></td><td class="d">2%</td><td>窗口更透明，最低 10%。</td></tr>
+                  <tr><td class="k">上 1P</td><td class="d"><code>[</code></td><td class="d">—</td><td>切到上一个分 P。</td></tr>
+                  <tr><td class="k">下 1P</td><td class="d"><code>]</code></td><td class="d">—</td><td>切到下一个分 P。</td></tr>
+                  <tr><td class="k">开启 / 关闭静音</td><td class="d">未设置</td><td class="d">—</td><td>把声音静音或恢复；默认没有分配按键，可在设置页自行录制。</td></tr>
+                  <tr><td class="k">隐藏 / 显示视频</td><td class="d"><code>-</code></td><td class="d">—</td><td>隐藏后声音继续，快捷键仍然有效，再按一次恢复显示。</td></tr>
+                  <tr><td class="k">开启 / 关闭锁定</td><td class="d"><code>=</code></td><td class="d">—</td><td>锁定后窗口不能拖动、不能改变大小。</td></tr>
+                  <tr><td class="k">开启 / 关闭挂起</td><td class="d"><code>F9</code></td><td class="d">—</td><td>只保留这个快捷键，其它键交还系统（可以正常打字），同时暂停视频。</td></tr>
+                  <tr><td class="k">开启 / 关闭穿透</td><td class="d"><code>F10</code></td><td class="d">—</td><td>鼠标点击落到下面的窗口（比如游戏），播放器不再响应点击。</td></tr>
+                  <tr><td class="k">开启 / 关闭置顶</td><td class="d"><code>F11</code></td><td class="d">—</td><td>窗口盖在其它窗口（包括游戏）上面。</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="note">默认键里的 <code>·</code> 是数字 1 左边的那个键。</p>
+            <p class="note">步长只对连续型动作有效：快退 / 快进按秒、音量按格、透明度按百分点、倍速按倍。设置页里只填数字（例如 5、2、0.1）；离散动作的步长框是灰的。</p>
+            <p class="note">快捷键是透传式监听：程序不拦截按键，按键仍会传给当前窗口。没有加修饰键时，游戏或其它软件的同名按键可能被同时触发；要临时让出快捷键，按 <code>F9</code> 挂起。</p>
+
+            <h3>录制新按键</h3>
+            <ol>
+              <li>点一下要改的那一行的按键框，框里会显示「请按键…」。</li>
+              <li>按下想用的组合键，可以加 <code>Ctrl</code> / <code>Alt</code> / <code>Shift</code> / <code>Win</code>。只按修饰键不算完成，可以接着按主键。</li>
+              <li>按键框显示新键位就是录好了；点「保存」后生效。</li>
+            </ol>
+            <ul>
+              <li>按 <code>Esc</code> 取消录制，恢复原来的键。</li>
+              <li>录制中切到别的窗口或最小化设置窗口，会自动取消。</li>
+              <li>输入法或其它软件模拟出来的按键不会被录进去。</li>
+              <li><code>Alt</code> + 数字、小键盘数字都能正常录制。</li>
+              <li>同一个键不能同时给两个动作：保存时窗口底部会提示「热键重复：某个键」，把其中一个改掉才能保存。</li>
+            </ul>
+
+            <h3>逐行「重置」</h3>
+            <ul>
+              <li>点某行右侧的「重置」：这一行的键位回到默认，需要步长的行同时恢复默认步长，不影响其它行。</li>
+              <li>这一行已经是默认值时，「重置」按钮是灰的。</li>
+              <li>底部的「重置为默认」是全部恢复，改完仍要点「保存」。</li>
+            </ul>
+
+            <h3>五项「?」说明</h3>
+            <ul>
+              <li><strong class="opt-name">隐藏 / 显示视频</strong>隐藏后快捷键仍然生效：再按一次同样的快捷键即可恢复显示，适合纯听 / 挂机时把画面藏起来。</li>
+              <li><strong class="opt-name">开启 / 关闭置顶</strong>置顶后窗口会盖在其他窗口（包括游戏）上面；再按一次同样的快捷键即可取消置顶。</li>
+              <li><strong class="opt-name">开启 / 关闭穿透</strong>开启后，鼠标点击会直接落到下面的窗口（比如游戏），播放器不再响应点击。再按一次同样的快捷键即可关闭。</li>
+              <li><strong class="opt-name">开启 / 关闭锁定</strong>开启后窗口会被固定住：既不能拖动位置，也不能改变大小，避免误操作。再按一次同样的快捷键即可解锁。</li>
+              <li><strong class="opt-name">开启 / 关闭挂起</strong>开启挂起后只保留这个快捷键，其它快捷键交还给系统（可以正常打字），同时暂停视频。再按一次取消挂起，快捷键恢复、视频继续。典型场景：跟跑路线途中临时回复消息——按 <code>F9</code> 挂起后随便打字，不会被快捷键打断，也不会因为误触暂停 / 快进而跳进度。</li>
+            </ul>
+
+          </div>
+        </details>
+
+        <!-- ---------- 实验性 ---------- -->
+        <details class="fold" id="settings-exp">
+          <summary>
+            <span class="s-name">实验性</span>
+            <span class="s-desc">直连 B 站 API、弹幕与弹幕调整、字幕（1 个主开关 + 3 个子项 + 1 组弹幕调整）</span>
+          </summary>
+          <div class="fold-body">
+            <p class="note">下列设置为实验性功能：可能不稳定，部分设置需要登录 B 站账号后才生效。主开关关闭时，下面的子项整块变灰，已保存的选择不会丢失。</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>设置项</th><th>是什么</th><th>默认</th><th>改了会怎样</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="k">启用直连 B 站 API</td>
+                    <td>直接从 B 站取播放地址，不再借助外部解析程序；直连也是字幕、登录态、弹幕等功能的前提。</td>
+                    <td class="d">关闭</td>
+                    <td>
+                      <div class="opt"><span class="opt-name">开启</span>直接向 B 站请求播放地址，起播和切 P 更快</div>
+                      <div class="opt"><span class="opt-name">关闭</span>回到兼容模式；字幕等直连专属功能一并失效</div>
+                      <div class="opt">保存后立即切换线路，正在播放的视频会重新取流，不需要重启。</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="k">启用弹幕</td>
+                    <td>播放时在画面上显示当前分 P 的弹幕，滚动、顶部、底部三类默认都会显示。</td>
+                    <td class="d">开启</td>
+                    <td>关闭后不再显示弹幕，也省一点网络；保存后对正在播放的视频生效。直连关闭时这一项灰掉。</td>
+                  </tr>
+                  <tr>
+                    <td class="k">启用字幕</td>
+                    <td>显示 B 站提供的视频字幕，位置在进度条上方。</td>
+                    <td class="d">开启</td>
+                    <td>
+                      <div class="opt"><span class="opt-name">显示条件</span>开启直连 + 已登录 B 站 + 该视频本身有字幕，三者缺一不可</div>
+                      <div class="opt">直连关闭时字幕也关闭（不会改用兼容模式取字幕）。</div>
+                      <div class="opt">保存即生效；开启时右侧出现「需登录生效」标记。</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="k">受到透明度调节影响</td>
+                    <td>弹幕、字幕要不要跟着视频一起变淡（弹幕项缩进在「启用弹幕」下，字幕项缩进在「启用字幕」下）。</td>
+                    <td class="d">开启（跟着变淡）</td>
+                    <td>关闭后对应内容保持清晰；弹幕、字幕各自只在对应的开关开启时可以改。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>弹幕调整</h3>
+            <p class="note">启用「直连 B 站 API」时才可调整。</p>
+            <ul>
+              <li><strong class="opt-name">启用弹幕调整</strong>默认关闭；关闭时下面各项都不生效，已保存的值仍然保留，重新打开即恢复。</li>
+              <li><strong class="opt-name">显示区域</strong>上界 / 下界两个百分比（0–100，要求上界小于下界、至少相差 5%），按画面高度决定弹幕出现在哪一段，底部弹幕也不会越出下界。</li>
+              <li><strong class="opt-name">显示哪几类</strong>滚动、顶部、底部三类可以分别开关。</li>
+              <li><strong class="opt-name">统一白色</strong>开启后彩色弹幕也显示为白色，减少画面干扰。</li>
+              <li><strong class="opt-name">字号</strong>0 表示跟随 B 站原字号，1–40 为统一字号。</li>
+              <li><strong class="opt-name">同屏上限</strong>50–1000（默认 300），超过上限的新弹幕直接丢弃，避免弹幕堆满画面。</li>
+              <li>这些调整保存后立即对正在播放的弹幕生效，不需要重启。</li>
+            </ul>
+            <p class="note">字幕、弹幕都只有直连模式才有；关闭直连后它们一并停止工作，这是正常的，不是故障。切回兼容模式后 1080P 及以下照常播放。</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- ============ 托盘菜单 ============ -->
+      <section class="card" id="tray">
+        <h2>托盘菜单</h2>
+        <p class="lead">托盘图标右键只有「退出」；左键单击（或双击）图标 = 呼出主页面。</p>
+        <details class="fold">
+          <summary>
+            <span class="s-name">菜单项说明</span>
+            <span class="s-desc">1 项</span>
+          </summary>
+          <div class="fold-body">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>项</th><th>作用</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="k">退出</td><td>退出程序。</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="note">托盘只有【退出】这一项。播放、设置、日志、诊断信息、检查更新与重启程序都在主页面：【播放】【设置】【其他】三页各有入口；显示 / 隐藏、置顶、锁定、穿透仍用快捷键。</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- ============ 常见问题 ============ -->
+      <section class="card" id="faq">
+        <h2>常见问题</h2>
+
+        <details class="fold faq">
+          <summary>没有声音？</summary>
+          <div class="fold-body">
+            <ul>
+              <li>先按 <code>↑</code> 调大播放器音量，再确认系统音量和输出设备正常。</li>
+              <li>主页面 →「其他」→「复制诊断信息」，里面能看到播放状态和音轨信息。</li>
+              <li>检测到有音轨但没有打开音频输出时，程序会自动重新初始化一次音频。</li>
+              <li>仍然无声：换一个视频确认不是视频本身没有音轨，再检查系统输出设备是否被其它程序独占。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="fold faq">
+          <summary>画面黑屏、花屏或卡顿？</summary>
+          <div class="fold-body">
+            <ul>
+              <li>设置 → 常规 → 编码偏好，改成 <strong>H.264</strong>，再换一个分 P 试试。</li>
+              <li>老显卡（GTX 10 系及以下）建议 H.264 + 720P。</li>
+              <li>画面变形或黑边太多：设置 → 常规 → 画面适应，改成「适应」或「填充」。</li>
+              <li>窗口拉大后画面发糊：把画质调到 1080P。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="fold faq">
+          <summary>字幕不显示？</summary>
+          <div class="fold-body">
+            <ul>
+              <li>确认「设置 → 实验性」里的直连开关和字幕开关都开着；直连关闭时字幕一定不显示。</li>
+              <li>确认已经在【登录】页登录 B 站；没登录时程序会给出提示，字幕不会显示。</li>
+              <li>不是所有视频都有字幕：视频本身没上传字幕时，这里不会凭空出现字幕。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="fold faq">
+          <summary>鼠标动不了、卡在游戏中间？</summary>
+          <div class="fold-body">
+            <ul>
+              <li>3D 游戏会锁定鼠标（鼠标视角），这是游戏本身的行为；按住 <code>Alt</code> 呼出鼠标就能操作播放器。</li>
+              <li>游戏锁鼠标时，播放器上的系统箭头会自动隐藏，画面中间不会多出一个箭头。</li>
+              <li>想直接点下面的游戏：按 <code>F10</code> 开启穿透，再按一次关闭。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="fold faq">
+          <summary>快捷键没反应？</summary>
+          <div class="fold-body">
+            <ul>
+              <li>程序默认以管理员身份运行。游戏是管理员权限而程序不是时，游戏在前台收不到按键，请改成以管理员身份启动。</li>
+              <li>按过 <code>F9</code>（挂起）时其它键不响应，再按一次 <code>F9</code> 恢复。</li>
+              <li>可能被别的软件占用了同一个键：设置 → 快捷键，给这个动作加上 <code>Ctrl</code> / <code>Alt</code>，或换一个键。</li>
+              <li>需要打字时先按 <code>F9</code> 挂起，按键就交还给系统。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="fold faq">
+          <summary>第一次启动提示下载 yt-dlp？</summary>
+          <div class="fold-body">
+            <ul>
+              <li>程序目录里没有 <code>yt-dlp.exe</code> 时，第一次启动会自动下载并校验文件完整性（SHA-256）。</li>
+              <li>下载会先测速，优先选更快的源；测速不可用时优先国内镜像，一个源失败自动换下一个。</li>
+              <li>全部源都失败时，程序会提示手动下载：把 <code>yt-dlp.exe</code> 放到程序目录后重试。</li>
+              <li>下载慢时先确认网络通畅；平时需要代理才能访问外网的话，先打开代理再试。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="fold faq">
+          <summary>提示「程序目录不可写」？</summary>
+          <div class="fold-body">
+            <ul>
+              <li>说明程序装在了 <code>Program Files</code> 这类受保护目录：以管理员身份运行一次程序目录里的 <code>scripts\install.ps1</code>，它会一次性授予 Users 写权限。</li>
+              <li>也可以把整个程序文件夹移到有写权限的位置，例如 <code>D:\GenshinRoutePlayer</code>。</li>
+            </ul>
+          </div>
+        </details>
+      </section>
+
+    </main>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var toc = document.getElementById("toc");
+  if (!toc) {
+    return;
+  }
+
+  var links = Array.prototype.slice.call(toc.querySelectorAll('a[href^="#"]'));
+  var entries = [];
+  links.forEach(function (link) {
+    var el = document.getElementById(link.getAttribute("href").slice(1));
+    if (el) {
+      entries.push({ link: link, el: el });
+    }
+  });
+  if (!entries.length) {
+    return;
+  }
+
+  function openAncestors(el) {
+    var node = el;
+    while (node) {
+      if (node.tagName === "DETAILS") {
+        node.open = true;
+      }
+      node = node.parentElement;
+    }
+  }
+
+  function clearState() {
+    links.forEach(function (a) {
+      a.classList.remove("active", "trail");
+      a.removeAttribute("aria-current");
+    });
+  }
+
+  function markActive(entry) {
+    var sub = entry.link.parentElement.parentElement;
+    var inSub = sub && sub.classList && sub.classList.contains("sub");
+    /* 窄窗口隐藏了二级目录：这时高亮它所属的一级目录，否则高亮项看不见 */
+    var subHidden = inSub && window.getComputedStyle(sub).display === "none";
+    if (subHidden) {
+      var parentLink = sub.parentElement.querySelector("a");
+      if (parentLink) {
+        parentLink.classList.add("active");
+        parentLink.setAttribute("aria-current", "true");
+      }
+      return;
+    }
+    entry.link.classList.add("active");
+    entry.link.setAttribute("aria-current", "true");
+    if (inSub) {
+      var trail = sub.parentElement.querySelector("a");
+      if (trail) {
+        trail.classList.add("trail");
+      }
+    }
+  }
+
+  var pending = false;
+  function update() {
+    pending = false;
+    var offset = window.scrollY + 120;
+    var current = entries[0];
+    entries.forEach(function (entry) {
+      var top = entry.el.getBoundingClientRect().top + window.scrollY;
+      if (top <= offset) {
+        current = entry;
+      }
+    });
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+    if (atBottom) {
+      current = entries[entries.length - 1];
+    }
+    clearState();
+    markActive(current);
+  }
+
+  function syncNavOffset() {
+    if (window.matchMedia("(max-width: 900px)").matches) {
+      document.documentElement.style.setProperty("--nav-offset", (toc.offsetHeight + 12) + "px");
+    }
+  }
+
+  function requestUpdate() {
+    if (!pending) {
+      pending = true;
+      window.requestAnimationFrame(update);
+    }
+  }
+
+  /* 点目录项：先把目标上的折叠打开，再按锚点滚动 */
+  toc.addEventListener("click", function (event) {
+    var link = event.target.closest ? event.target.closest("a") : null;
+    if (!link) {
+      return;
+    }
+    var href = link.getAttribute("href") || "";
+    if (href.charAt(0) !== "#") {
+      return;
+    }
+    var target = document.getElementById(href.slice(1));
+    if (!target) {
+      return;
+    }
+    openAncestors(target);
+    clearState();
+    markActive({ link: link, el: target });
+  });
+
+  function openHashTarget() {
+    if (!location.hash) {
+      return;
+    }
+    var target = document.getElementById(location.hash.slice(1));
+    if (target) {
+      openAncestors(target);
+    }
+  }
+
+  window.addEventListener("scroll", requestUpdate, { passive: true });
+  window.addEventListener("resize", function () {
+    syncNavOffset();
+    requestUpdate();
+  });
+  window.addEventListener("hashchange", openHashTarget);
+
+  /* 打印时展开全部折叠，打印完恢复原状 */
+  var saved = [];
+  window.addEventListener("beforeprint", function () {
+    saved = [];
+    Array.prototype.forEach.call(document.querySelectorAll("details"), function (d) {
+      saved.push([d, d.open]);
+      d.open = true;
+    });
+  });
+  window.addEventListener("afterprint", function () {
+    saved.forEach(function (item) {
+      item[0].open = item[1];
+    });
+    saved = [];
+  });
+
+  syncNavOffset();
+  openHashTarget();
+  update();
+})();
+</script>
+</body>
+</html>

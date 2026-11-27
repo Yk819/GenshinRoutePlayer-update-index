@@ -1,0 +1,290 @@
+﻿<#
+.SYNOPSIS
+    0.3.0 配置升级脚本（configUpgrade, phase=post）。
+
+.DESCRIPTION
+    只迁移 app/data 下的用户数据，不碰 app/data/update（更新器事务/快照/备份目录），
+    幂等标记写 app/data/config-schema.json；失败中文可见并以非 0 退出。
+
+    迁移项：
+      1. last-session.json -> playback-history.json（默认数据根与 app/data/profiles/*）；
+      2. settings.json 的旧格式：DirectApiEnabled 与 Provider 同源、update.policy 显式值、
+         旧弹幕预设 DanmakuArea -> DanmakuAreaTop/Bottom 并移除旧键、热键旧别名 PUGU/PGON -> PageUp/PageDown。
+
+    运行契约见 docs/updater/CONFIG-SCRIPTS.md 2.4；数据格式见 docs/reference/SETTINGS-KEYS.md
+    与 docs/reference/CONFIG-KEYS.md。脚本不读注册表、不联网、不启动程序、不输出敏感值。
+#>
+[CmdletBinding()]
+param()
+$ErrorActionPreference = 'Stop'
+
+$root = $env:GRP_INSTALL_ROOT
+if ([string]::IsNullOrWhiteSpace($root)) {
+    Write-Error 'GRP_INSTALL_ROOT 未设置'
+    exit 2
+}
+$root = [System.IO.Path]::GetFullPath($root)
+$rootPrefix = $root.TrimEnd('') + ''
+
+function Resolve-InstalledPath {
+    param([Parameter(Mandatory = $true)][string]$RelativePath)
+    $full = [System.IO.Path]::GetFullPath((Join-Path $root $RelativePath))
+    if (-not $full.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw ('路径越界：' + $RelativePath)
+    }
+    return $full
+}
+
+$to = $env:GRP_TO_VERSION
+if ([string]::IsNullOrWhiteSpace($to)) { $to = '0.3.0' }
+$markerPath = Resolve-InstalledPath 'app/data/config-schema.json'
+if (Test-Path -LiteralPath $markerPath) {
+    $current = (Get-Content -LiteralPath $markerPath -Raw -Encoding UTF8).Trim()
+    if ($current -eq $to) {
+        Write-Host ('配置已是 ' + $to + '，迁移幂等跳过')
+        exit 0
+    }
+}
+
+$data = Resolve-InstalledPath 'app/data'
+if (-not (Test-Path -LiteralPath $data)) { exit 0 }
+
+function Read-Json([string]$path) {
+    if (-not (Test-Path -LiteralPath $path)) { return $null }
+    try { return (Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json) } catch { return $null }
+}
+function To-Double($value) {
+    try { $d = [double]$value } catch { return $null }
+    if ([double]::IsNaN($d) -or [double]::IsInfinity($d)) { return $null }
+    return $d
+}
+function Valid-Bvid([string]$bvid) { return ($bvid -match '^[Bb][Vv]1[0-9A-Za-z]{9}$') }
+function Normalize-Bvid([string]$bvid) { return 'BV' + $bvid.Substring(2) }
+function Read-Updating([object]$entry, [datetime]$fallback) {
+    try { return [DateTimeOffset]::Parse([string]$entry.updatedAt, [Globalization.CultureInfo]::InvariantCulture).ToString('o') }
+    catch { return $fallback.ToUniversalTime().ToString('o') }
+}
+
+# 大小写不敏感的 JSON 属性访问：settings.json 由 System.Text.Json 写 PascalCase，手改可能出现其它大小写。
+function Get-Prop($obj, [string]$name) {
+    if ($null -eq $obj) { return $null }
+    foreach ($p in $obj.PSObject.Properties) {
+        if ([string]::Equals($p.Name, $name, [System.StringComparison]::OrdinalIgnoreCase)) { return $p }
+    }
+    return $null
+}
+function Set-Prop($obj, [string]$name, $value) {
+    $existing = Get-Prop $obj $name
+    if ($null -ne $existing) { $existing.Value = $value; return }
+    $null = $obj | Add-Member -NotePropertyName $name -NotePropertyValue $value -Force
+}
+function Remove-Prop($obj, [string]$name) {
+    $existing = Get-Prop $obj $name
+    if ($null -eq $existing) { return $false }
+    $obj.PSObject.Properties.Remove($existing.Name)
+    return $true
+}
+function Write-JsonAtomic([string]$path, [string]$json) {
+    $tmp = $path + '.tmp-' + [guid]::NewGuid().ToString('N')
+    try {
+        [System.IO.File]::WriteAllText($tmp, $json, (New-Object System.Text.UTF8Encoding($false)))
+        Move-Item -LiteralPath $tmp -Destination $path -Force
+    }
+    catch {
+        if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
+        throw ('写入失败（' + $path + '）：' + $_.Exception.Message)
+    }
+}
+
+# 更新器状态目录（默认 app/data/update：事务 journal、app/data 快照、LKG、双更新器状态）不是用户数据，
+# 绝不能读写：快照里的 last-session.json / settings.json 是「备份副本」，在它旁边写迁移产物会污染
+# 回滚用的备份，让一次失败的升级在 app/data 里多出迁移产物（C3 §2.1：脚本不得删除/修改备份与事务目录）。
+$stateDir = Join-Path $data 'update'
+$statePrefix = $stateDir.TrimEnd('') + ''
+
+# ---- 1) last-session.json -> playback-history.json ----
+$sessionFiles = @(Get-ChildItem -LiteralPath $data -Recurse -File -Filter 'last-session.json' -ErrorAction SilentlyContinue |
+    Where-Object { -not $_.FullName.StartsWith($statePrefix, [StringComparison]::OrdinalIgnoreCase) })
+foreach ($file in $sessionFiles) {
+    $session = Read-Json $file.FullName
+    if ($null -eq $session) { continue }
+    $bvid = [string]$session.bvid
+    if (-not (Valid-Bvid $bvid)) { continue }
+    $page = 0
+    if (-not [int]::TryParse([string]$session.page, [ref]$page) -or $page -lt 1) { continue }
+    $pos = To-Double $session.positionSeconds
+    if ($null -eq $pos) { $pos = 0 }
+    if ($pos -lt 0) { $pos = 0 }
+    if ($pos -gt 2592000) { $pos = 2592000 }
+
+    $historyPath = Join-Path $file.DirectoryName 'playback-history.json'
+    $history = Read-Json $historyPath
+    $entries = @()
+    if ($null -ne $history) { $entries = @($history) }
+    $existing = $false
+    foreach ($e in $entries) {
+        if ($null -eq $e) { continue }
+        if ([string]::Equals([string]$e.bvid, $bvid, [StringComparison]::OrdinalIgnoreCase) -and [int]$e.page -eq $page) { $existing = $true; break }
+    }
+    if ($existing) { continue }
+
+    $entries += [pscustomobject]@{
+        bvid = Normalize-Bvid $bvid
+        page = $page
+        lastPositionSeconds = [math]::Round($pos, 3)
+        updatedAt = Read-Updating $session $file.LastWriteTime
+    }
+
+    $seen = @{}
+    $kept = @()
+    $sorted = @($entries | Sort-Object {
+        try { [DateTimeOffset]::Parse([string]$_.updatedAt, [Globalization.CultureInfo]::InvariantCulture) } catch { [DateTimeOffset]::MinValue }
+    } -Descending)
+    foreach ($e in $sorted) {
+        if ($null -eq $e.bvid) { continue }
+        $key = ([string]$e.bvid).ToUpperInvariant() + '#' + [string]$e.page
+        if ($seen.ContainsKey($key)) { continue }
+        $seen[$key] = $true
+        $kept += $e
+        if ($kept.Count -ge 10) { break }
+    }
+
+    $json = ConvertTo-Json -InputObject ([object[]]$kept) -Depth 8
+    Write-JsonAtomic $historyPath $json
+    Write-Host ('迁移 last-session -> playback-history：' + $historyPath)
+}
+
+# ---- 2) settings.json 旧格式（0.2.1 -> 0.3.0）----
+# 运行期只保留「全新安装缺键」的默认值语义，旧格式一律在这里补齐（见 CONFIG-SCRIPTS.md 2.13）。
+$settingsFiles = @(Get-ChildItem -LiteralPath $data -Recurse -File -Filter 'settings.json' -ErrorAction SilentlyContinue |
+    Where-Object { -not $_.FullName.StartsWith($statePrefix, [StringComparison]::OrdinalIgnoreCase) })
+foreach ($file in $settingsFiles) {
+    $settings = Read-Json $file.FullName
+    if ($null -eq $settings) {
+        Write-Host ('跳过 settings.json（不是合法 JSON，程序按未配置处理）：' + $file.FullName)
+        continue
+    }
+    if ($settings -isnot [System.Management.Automation.PSCustomObject]) {
+        Write-Host ('跳过 settings.json（顶层不是 JSON 对象）：' + $file.FullName)
+        continue
+    }
+
+    $changed = $false
+    $note = @()
+
+    # 2.1 直连开关与 provider 同源：缺开关按 provider 推导；两者都有时以开关为真源对齐 provider。
+    $providerProp = Get-Prop $settings 'Provider'
+    $switchProp = Get-Prop $settings 'DirectApiEnabled'
+    if ($null -eq $switchProp) {
+        $provider = ''
+        if ($null -ne $providerProp) { $provider = [string]$providerProp.Value }
+        $derived = [string]::Equals($provider.Trim(), 'direct-api', [StringComparison]::OrdinalIgnoreCase)
+        Set-Prop $settings 'DirectApiEnabled' $derived
+        $changed = $true
+        $note += ('直连开关=' + $derived.ToString().ToLowerInvariant())
+    }
+    else {
+        $enabled = $false
+        if ($switchProp.Value -is [bool]) { $enabled = [bool]$switchProp.Value }
+        $expected = if ($enabled) { 'direct-api' } else { 'ytdlp' }
+        $current = ''
+        if ($null -ne $providerProp) { $current = [string]$providerProp.Value }
+        if (-not [string]::Equals($current, $expected, [StringComparison]::OrdinalIgnoreCase)) {
+            Set-Prop $settings 'Provider' $expected
+            $changed = $true
+            $note += ('provider=' + $expected)
+        }
+    }
+
+    # 2.2 update.policy 写显式值（缺键语义与新安装默认同值 auto_stable）。
+    $updateProp = Get-Prop $settings 'Update'
+    if ($null -eq $updateProp -or $null -eq $updateProp.Value) {
+        Set-Prop $settings 'Update' ([pscustomobject]@{ Policy = 'auto_stable' })
+        $changed = $true
+        $note += 'update.policy=auto_stable'
+    }
+    elseif ($updateProp.Value -is [System.Management.Automation.PSCustomObject]) {
+        $policyProp = Get-Prop $updateProp.Value 'Policy'
+        if ($null -eq $policyProp -or [string]::IsNullOrWhiteSpace([string]$policyProp.Value)) {
+            Set-Prop $updateProp.Value 'Policy' 'auto_stable'
+            $changed = $true
+            $note += 'update.policy=auto_stable'
+        }
+    }
+
+    # 2.3 旧弹幕预设（full/upper/lower/middle）-> 上下界百分比，并移除旧键。
+    $areaProp = Get-Prop $settings 'DanmakuArea'
+    if ($null -ne $areaProp) {
+        $preset = ([string]$areaProp.Value).Trim().ToLowerInvariant()
+        $top = 0.0
+        $bottom = 100.0
+        if ($preset -eq 'upper') { $top = 0.0; $bottom = 50.0 }
+        elseif ($preset -eq 'lower') { $top = 50.0; $bottom = 100.0 }
+        elseif ($preset -eq 'middle') { $top = 25.0; $bottom = 75.0 }
+
+        $topProp = Get-Prop $settings 'DanmakuAreaTop'
+        $bottomProp = Get-Prop $settings 'DanmakuAreaBottom'
+        if ($null -ne $topProp) {
+            $parsedTop = To-Double $topProp.Value
+            if ($null -ne $parsedTop) { $top = [math]::Max(0, [math]::Min(100, $parsedTop)) }
+        }
+        if ($null -ne $bottomProp) {
+            $parsedBottom = To-Double $bottomProp.Value
+            if ($null -ne $parsedBottom) { $bottom = [math]::Max(0, [math]::Min(100, $parsedBottom)) }
+        }
+
+        # 与 DanmakuAdjustment.NormalizeAreaBounds 同口径：先夹 0–100，再补足 5% 最小间隔。
+        if (($bottom - $top) -lt 5) {
+            $bottom = [math]::Min(100, $top + 5)
+            if (($bottom - $top) -lt 5) { $top = [math]::Max(0, $bottom - 5) }
+        }
+        $top = [math]::Round($top, 2)
+        $bottom = [math]::Round($bottom, 2)
+
+        $topCurrent = $null
+        if ($null -ne $topProp) { $topCurrent = To-Double $topProp.Value }
+        $bottomCurrent = $null
+        if ($null -ne $bottomProp) { $bottomCurrent = To-Double $bottomProp.Value }
+        if ($null -eq $topCurrent -or $topCurrent -ne $top) { Set-Prop $settings 'DanmakuAreaTop' $top }
+        if ($null -eq $bottomCurrent -or $bottomCurrent -ne $bottom) { Set-Prop $settings 'DanmakuAreaBottom' $bottom }
+        $null = Remove-Prop $settings 'DanmakuArea'
+        $changed = $true
+        $note += ('弹幕区域 ' + [string]$areaProp.Value + ' -> ' + $top + '–' + $bottom + '%')
+    }
+
+    # 2.4 热键旧别名 PUGU / PGON -> WPF 规范键名 PageUp / PageDown。
+    $hotkeysProp = Get-Prop $settings 'Hotkeys'
+    if ($null -ne $hotkeysProp -and $null -ne $hotkeysProp.Value) {
+        foreach ($hotkey in @($hotkeysProp.Value)) {
+            if ($null -eq $hotkey) { continue }
+            $keyProp = Get-Prop $hotkey 'Key'
+            if ($null -eq $keyProp) { continue }
+            $key = ([string]$keyProp.Value).Trim()
+            $canonical = $null
+            if ([string]::Equals($key, 'PUGU', [StringComparison]::OrdinalIgnoreCase)) { $canonical = 'PageUp' }
+            elseif ([string]::Equals($key, 'PGON', [StringComparison]::OrdinalIgnoreCase)) { $canonical = 'PageDown' }
+            if ($null -ne $canonical) {
+                $keyProp.Value = $canonical
+                $changed = $true
+                $note += ('热键 ' + $key + ' -> ' + $canonical)
+            }
+        }
+    }
+
+    if (-not $changed) { continue }
+
+    $json = ConvertTo-Json -InputObject $settings -Depth 20
+    try {
+        Write-JsonAtomic $file.FullName $json
+    }
+    catch {
+        Write-Error ('settings.json 迁移失败：' + $file.FullName + '：' + $_.Exception.Message)
+        exit 1
+    }
+    Write-Host ('迁移 settings.json：' + $file.FullName + '（' + ($note -join '；') + '）')
+}
+
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $markerPath) | Out-Null
+[System.IO.File]::WriteAllText($markerPath, $to, (New-Object System.Text.UTF8Encoding($false)))
+Write-Host ('0.3.0 配置迁移完成：' + $to)
+exit 0
